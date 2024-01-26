@@ -6,6 +6,7 @@
 #include "types.h"
 #include "utils.h"
 #include <ctype.h>
+#include <string.h>
 
 //object* string_to_number()
 
@@ -15,12 +16,28 @@ int isdelim(int c){
     return isspace(c) || c == ')' || c == '(' || c == '"' || c == ';' || c == EOF;
 }
 
-int isnumeric(int c){ 
+int isnumeric(const char c){ 
     //Can be replaced later to support non-ASCII digits?
     return isdigit(c); 
 }
 
+int stringeq(const char * s1, const char * s2){
+    return strcmp(s1, s2);
+}
 
+int stringlength(const char * s){
+    return strlen(s);
+}
+
+int stringcopy(char * s1, char * s2){
+    //assumes s1 has enough space for s2 and a null character, and s2 is null terminated
+    int len = stringlength(s2);
+    for (int i = 0; i < len; i++){
+        s1[i] = s2[i];
+    }
+    s1[len] = 0;
+    return 0;
+}
 
 #define INT 0
 #define FLOAT 1
@@ -34,9 +51,13 @@ typedef struct Number{
 } Number;
 
 
+enum{
+    NAN = -1,
+    NUM = 0,
+};
 
 
-int string_to_number(const int* str, Number *n){
+int string_to_number(const char* str, Number *n){
 
     int i = 0;
     int j = 0;
@@ -44,7 +65,7 @@ int string_to_number(const int* str, Number *n){
 
     int minusflag = 0;
 
-    const int *c = str;
+    const char *c = str;
     if (*c == '-'){
         minusflag = 1;
     }
@@ -69,6 +90,9 @@ int string_to_number(const int* str, Number *n){
         n->data.f = (minusflag == 0) ? d : -d;;
         n->numbertype = FLOAT;
     }
+    else if (*c != 0 && !isnumeric(*c)){
+        return NAN;
+    }
     else { //integer
         n->data.i = (minusflag == 0) ? i : -i;
         n->numbertype = INT;
@@ -76,17 +100,21 @@ int string_to_number(const int* str, Number *n){
 
 
 
-    return 0; 
+    return NUM; 
 }
 
 
-object *create_number (const int* str){
+object *create_number (const char* str){
     Number n;
-    if (string_to_number(str, &n) == 0){
+    int result = string_to_number(str, &n);
+    if (result == NUM){
         object *o = create_object();
         o->type = FIXNUM; //only do integers for now
         o->data.fixnum.value = n.data.i;
         return o;
+    }
+    else if (result == NAN){
+        return 0L;
     }
     return 0L; // proper error handling to be done later
 }

@@ -22,7 +22,28 @@ object* ofalse = &(ofalse_obj);
 
 object* quote_symbol;
 
+object* symbols = &(empty_list_obj);
 
+
+int add_symbol(object* s){
+    if (s->type != SYMBOL){
+        return -1;
+    }
+    symbols = cons(s, symbols);
+    return 0;
+}
+
+object* lookup_symbol(const char* v){
+    object* current_symbols = symbols;
+    while (!is_empty_list(current_symbols)){
+        object * s = car(current_symbols);
+        if (stringeq(s->data.symbol.value, v) == 0){
+            return s;
+        }
+        current_symbols = cdr(current_symbols);
+    }
+    return empty_list;
+}
 
 #define BUFFER_SIZE 1000
 
@@ -57,15 +78,7 @@ void eat_whitespace(FILE *in){
 }
 
 
-object *cons(object *car, object *cdr){
-    object *cons = create_object();
-    cons->type = PAIR;
-    
-    cons->data.pair.car = car;
-    cons->data.pair.cdr = cdr;
 
-    return cons;
-}
 
 
 object *read(FILE *in);
@@ -168,9 +181,9 @@ object *readstring(FILE *in){
     return o;
 }
 
-object *make_char(const int *str){
+object *make_char(const char *str){
     // Assumes input of form #\x where x is a character. 
-    const int *c = str;
+    const char *c = str;
     
     if ((str[0] != '#' && str[1] != '\\') || str[2] == 0){
         return empty_list;
@@ -184,6 +197,29 @@ object *make_char(const int *str){
     return o;
 }
 
+object *make_symbol(const char *buffer){
+    /*
+    From "LISP in Small Pieces" ch 1.5
+    Creating symbols should involve looking them up, to see if they exist
+    If they do, then just return that symbol. This allows using pointer equality
+     */
+    
+    object * newsymbol;
+
+    newsymbol = lookup_symbol(buffer);
+    if (!is_empty_list(newsymbol)){
+        return newsymbol;
+    }
+
+
+    newsymbol = create_object();
+    newsymbol->type = SYMBOL;
+    newsymbol->data.symbol.value = allocate(stringlength(buffer) + 1);
+    add_symbol(newsymbol);
+
+    return newsymbol;
+}
+
 object *readatom(FILE *in){
     //Reads symbols, fixnums, booleans, characters and strings
     
@@ -194,7 +230,8 @@ object *readatom(FILE *in){
     }
     
 
-    int buf[BUFFER_SIZE] = {0};
+    //int buf[BUFFER_SIZE] = {0};
+    char buf[BUFFER_SIZE] = {0};
     int i = 0;
 
     while (i < BUFFER_SIZE && !isdelim((c = get_next_char(in)))){
@@ -221,7 +258,17 @@ object *readatom(FILE *in){
     }
 
     if (isnumeric(buf[0]) || (i > 0 && isnumeric(buf[1]) && buf[0] == '-')){
-        return create_number(buf);
+        object *o = create_number(buf);
+        //If o is not the null pointer then it is a number. If it is, that means we had something like 123abc which can be a symbol in most LISPS.
+        if (o != 0){ 
+            return create_number(buf);
+        }
+
+    }
+
+    object *newsymbol = make_symbol(buf);
+    if (newsymbol != 0L){
+        return newsymbol;
     }
 
     return empty_list;

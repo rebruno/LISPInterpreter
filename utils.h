@@ -33,13 +33,44 @@ object *create_object(){
     return obj;
 }
 
-
-
-
-
 int is_empty_list(object* list){
     return list == empty_list;
 }
+
+int is_pair(object* pair){
+    return pair->type == PAIR;
+}
+
+
+object* cons(object *car, object *cdr){
+    object *cons = create_object();
+    cons->type = PAIR;
+    
+    cons->data.pair.car = car;
+    cons->data.pair.cdr = cdr;
+
+    return cons;
+}
+
+object* car(object* pair){
+    if (is_pair(pair)){
+        return pair->data.pair.car;
+    }
+    error("Expected a pair when using car!");
+    return empty_list;
+}
+
+object* cdr(object* pair){
+    if (is_pair(pair)){
+        return pair->data.pair.cdr;
+    }
+    error("Expected a pair when using cdr!");
+    return empty_list;
+}
+
+
+
+
 
 
 
