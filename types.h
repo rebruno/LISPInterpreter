@@ -35,6 +35,16 @@ typedef struct object {
             struct object *cdr;
         } pair;
 
+        struct {
+            struct object* params;
+            struct object* body;
+            struct object* env;
+        } compound;
+
+        struct{
+            struct object* (*function)(struct object* args);
+        } primitive;
+
     } data;
 
 } object;
@@ -46,9 +56,16 @@ typedef struct object {
 extern object* empty_list;
 extern object* otrue;
 extern object* ofalse;
+
 extern object* quote_symbol;
-
-
+extern object* set_symbol;
+extern object* definition_symbol;
+extern object* if_symbol;
+extern object* else_symbol;
+extern object* lambda_symbol;
+extern object* begin_symbol;
+extern object* cond_symbol;
+extern object* exit_symbol;
 
 
 #endif

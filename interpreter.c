@@ -1,17 +1,30 @@
 #include "reader.h"
+#include "evaluator.h"
+#include "writer.h"
 
 #include <stdio.h>
 
 int main(int argc, char const *argv[])
 {
-    
-    object *o = read(stdin);
-    printf("recived object o with type %s\n", enum_strings[o->type]);
+    printf("Init symbols\n");
+    init_symbols();
 
+    printf("Creating empty env\n");
+    object* env = create_empty_environment();
 
+    printf("Populating\n");
+    env = populate_default_environment(env);
 
+    object* o = empty_list;
 
+    while (!is_exit(o)){ //Exit should be replaced by a proper procedure
+        printf("> ");
+        o = read(stdin);
+        o = eval(o, env);
+        write(stdout, o);
+    }
 
+    printf("Exiting\n");
     return 0;
 }
 

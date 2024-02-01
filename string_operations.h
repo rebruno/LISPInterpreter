@@ -29,10 +29,10 @@ int stringlength(const char * s){
     return strlen(s);
 }
 
-int stringcopy(char * s1, char * s2){
-    //assumes s1 has enough space for s2 and a null character, and s2 is null terminated
+int stringncopy(char * s1, char * s2, int n){
+    //n should be the size of s1 and s2 is null terminated
     int len = stringlength(s2);
-    for (int i = 0; i < len; i++){
+    for (int i = 0; i < len && i < n; i++){
         s1[i] = s2[i];
     }
     s1[len] = 0;

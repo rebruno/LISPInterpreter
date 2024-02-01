@@ -20,9 +20,22 @@ object* otrue = &(otrue_obj);
 object ofalse_obj = { .type = BOOLEAN, .data.boolean = false};
 object* ofalse = &(ofalse_obj);
 
+
+//symbols initialized in init_symbols()
 object* quote_symbol;
+object* set_symbol;
+object* definition_symbol;
+object* if_symbol;
+object* else_symbol;
+object* lambda_symbol;
+object* begin_symbol;
+object* cond_symbol;
+object* exit_symbol;
 
 object* symbols = &(empty_list_obj);
+
+
+
 
 
 int add_symbol(object* s){
@@ -34,9 +47,12 @@ int add_symbol(object* s){
 }
 
 object* lookup_symbol(const char* v){
+
     object* current_symbols = symbols;
+    object* s;
+
     while (!is_empty_list(current_symbols)){
-        object * s = car(current_symbols);
+        s = car(current_symbols);
         if (stringeq(s->data.symbol.value, v) == 0){
             return s;
         }
@@ -58,7 +74,13 @@ object* lookup_symbol(const char* v){
 //Error handling is left to where these are used
 int get_next_char(FILE *in){ //peek
     int c = fgetc(in);
-    ungetc(c, in);
+    if (c == EOF && ferror(in)){
+        return c;
+    }
+    int i = ungetc(c, in);
+    if (i == EOF){
+        return i;
+    }
     return c; 
 }
 
@@ -78,29 +100,24 @@ void eat_whitespace(FILE *in){
 }
 
 
-
-
-
 object *read(FILE *in);
 
 object *readpair(FILE *in){
     //Starts on first character after the opening '('
-    eat_whitespace(in); //maybe this should also eat opening brackets?
+    eat_whitespace(in); 
 
     object *caro;
     object *cdro;
 
     int c = get_next_char(in);
+    if (c == EOF){
+        goto handleEOF;
+    }
 
     if (c == '('){
         consume_next_char(in);
         c = get_next_char(in);
     }
-
-    if (c == EOF){
-        goto handleEOF;
-    }
-
 
     if (c == ')'){
         return empty_list;
@@ -121,7 +138,6 @@ object *readpair(FILE *in){
             error("Closing paren missing in readpair");
             return empty_list;
         }
-        //return cons(caro, cdro);
     }
     else{
         cdro = readpair(in);
@@ -131,7 +147,6 @@ object *readpair(FILE *in){
             error("Closing paren missing");
             return empty_list;
         }
-        //return cons(caro, cdro);
     }
 
 
@@ -166,8 +181,7 @@ object *readstring(FILE *in){
         c = consume_next_char(in);
         buf[i++] = c;
     }
-    //if (i == BUFFER_SIZE || !isdelim(get_next_char(in))){
-    if (i == BUFFER_SIZE || !isdelim(get_next_char(in))){
+    if (i == BUFFER_SIZE && !isdelim(get_next_char(in))){
         error("Exceeded buffersize");
         return empty_list;
     }
@@ -197,16 +211,17 @@ object *make_char(const char *str){
     return o;
 }
 
-object *make_symbol(const char *buffer){
+object *make_symbol(char *buffer){
     /*
     From "LISP in Small Pieces" ch 1.5
     Creating symbols should involve looking them up, to see if they exist
     If they do, then just return that symbol. This allows using pointer equality
      */
-    
+
     object * newsymbol;
 
     newsymbol = lookup_symbol(buffer);
+
     if (!is_empty_list(newsymbol)){
         return newsymbol;
     }
@@ -214,7 +229,11 @@ object *make_symbol(const char *buffer){
 
     newsymbol = create_object();
     newsymbol->type = SYMBOL;
-    newsymbol->data.symbol.value = allocate(stringlength(buffer) + 1);
+
+    int bufferlen = stringlength(buffer) + 1;
+    newsymbol->data.symbol.value = allocate(bufferlen);
+    stringncopy(newsymbol->data.symbol.value, buffer, bufferlen);
+
     add_symbol(newsymbol);
 
     return newsymbol;
@@ -222,7 +241,8 @@ object *make_symbol(const char *buffer){
 
 object *readatom(FILE *in){
     //Reads symbols, fixnums, booleans, characters and strings
-    
+    //Should probably add an error object to distinguish between error and empty list
+
     int c = get_next_char(in);
 
     if (c == '"'){
@@ -272,6 +292,23 @@ object *readatom(FILE *in){
     }
 
     return empty_list;
+}
+
+
+
+
+int init_symbols(){
+    quote_symbol = make_symbol("quote");
+    set_symbol = make_symbol("set!"); 
+    definition_symbol = make_symbol("define");
+    if_symbol = make_symbol("if");
+    else_symbol = make_symbol("else");
+    lambda_symbol = make_symbol("lambda");
+    begin_symbol = make_symbol("begin");
+    cond_symbol = make_symbol("cond");
+    exit_symbol = make_symbol("exit");
+
+    return 0;
 }
 
 object *read(FILE *in){
