@@ -211,7 +211,17 @@ object* expand_cond(object* clauses){
     }
 }
 
+object* make_procedure(object* params, object* body, object* env){
+    //Returns a compound procedure i.e. user defined
+    object* proc = create_object();
 
+    proc->type = COMPOUND;
+    proc->data.compound.params = params;
+    proc->data.compound.params = body;
+    proc->data.compound.params = env;
+
+
+}
 
 object* eval(object *exp, object *env){
 
@@ -237,7 +247,7 @@ object* eval(object *exp, object *env){
         return eval(eval_if(exp, env), env); //For tail calls later, set exp = eval_if and just go to top
     }
     else if (is_lambda(exp)){
-
+        return make_procedure(car(cdr(exp)), cdr(cdr(exp)), env);
     }
     else if (is_begin(exp)){
         exp = cdr(exp);

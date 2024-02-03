@@ -26,14 +26,17 @@ static int write_pair(FILE *out, object* pair){
     int return_value = 0;
     if (is_pair(cdr(pair))){
         write_sexpr(out, car(pair));
+        fprintf(out, " ");
         return_value = write_pair(out, cdr(pair));
     }
     else if (is_empty_list(cdr(pair))){
         return_value = write_sexpr(out, car(pair));
     }
-    else{
+    else{ //a pair
+        fprintf(out, " . ");
         return_value = write_sexpr(out, cdr(pair));
     }
+   
     return return_value;
 }
 
@@ -45,10 +48,10 @@ int write_sexpr(FILE *out, object* sexpr){
             return_value = fprintf(out, "'() ");
             break;
         case FIXNUM:
-            return_value = fprintf(out, "%d ", sexpr->data.fixnum.value);
+            return_value = fprintf(out, "%d", sexpr->data.fixnum.value);
             break;
         case SYMBOL:
-            return_value = fprintf(out, "%s ", sexpr->data.symbol.value);
+            return_value = fprintf(out, "%s", sexpr->data.symbol.value);
             break;
         case BOOLEAN:
             if (sexpr->data.boolean.value){
@@ -65,7 +68,9 @@ int write_sexpr(FILE *out, object* sexpr){
             return_value = fprintf(out, "%s ", sexpr->data.string.value);
             break;
         case PAIR:
+            fprintf(out, "(");
             return_value = write_pair(out, sexpr);
+            fprintf(out, ")");
             break;
         case PRIMITIVE:
         case COMPOUND:

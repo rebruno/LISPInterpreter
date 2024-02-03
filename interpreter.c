@@ -20,7 +20,14 @@ int main(int argc, char const *argv[])
     while (!is_exit(o)){ //Exit should be replaced by a proper procedure
         printf("> ");
         o = read(stdin);
+
+        //For debug
+        printf("Received: \n");
+        write(stdout, o);
+
         o = eval(o, env);
+
+        printf("Evaluated: \n");
         write(stdout, o);
     }
 

@@ -114,10 +114,14 @@ object *readpair(FILE *in){
         goto handleEOF;
     }
 
+    /*
     if (c == '('){
         consume_next_char(in);
         c = get_next_char(in);
     }
+    */
+
+   
 
     if (c == ')'){
         return empty_list;
@@ -318,6 +322,7 @@ object *read(FILE *in){
     int c = get_next_char(in);
 
     if (c == '('){
+        consume_next_char(in);
         o = readpair(in);
         if (get_next_char(in) != ')'){
             error("Closing paren missing");
