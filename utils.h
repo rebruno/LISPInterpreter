@@ -32,6 +32,7 @@ object *create_object(){
 
     obj = allocate(sizeof *obj);
     if (obj == NULL){
+        //Could add a garbage collector here
         error("Ran out of memory");
         exit(1);
     }
@@ -50,6 +51,10 @@ int is_pair(object* pair){
 
 int is_symbol(object* symbol){
     return symbol->type == SYMBOL;
+}
+
+int is_fixnum(object* fixnum){
+    return fixnum->type == FIXNUM;
 }
 
 object* cons(object *car, object *cdr){
@@ -156,7 +161,12 @@ int list_length(object* lst){
     return c;
 }
 
-
+object* make_fixnum(int value){
+    object* o = create_object();
+    o->type = FIXNUM;
+    o->data.fixnum.value = value;
+    return o;
+}
 
 
 

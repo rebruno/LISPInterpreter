@@ -16,19 +16,12 @@ int main(int argc, char const *argv[])
     env = populate_default_environment(env);
 
     object* o = empty_list;
-
+    object* o2;
     while (!is_exit(o)){ //Exit should be replaced by a proper procedure
         printf("> ");
         o = read(stdin);
-
-        //For debug
-        printf("Received: \n");
-        write(stdout, o);
-
-        o = eval(o, env);
-
-        printf("Evaluated: \n");
-        write(stdout, o);
+        o2 = eval(o, env);
+        write(stdout, o2);
     }
 
     printf("Exiting\n");

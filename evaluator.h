@@ -1,6 +1,8 @@
 #include "types.h"
 #include "utils.h"
 
+#include "primitives.h"
+
 
 object* eval(object *exp, object *env);
 
@@ -66,7 +68,8 @@ int assign_symbol(object* var, object* val, object* env){
 }
 
 object* make_lambda(object* params, object* body){
-    error("Have not impemented lambdas");
+    //error("Have not impemented lambdas");
+    return cons(lambda_symbol, cons(params, body));
 }
 
 object* definition_variable(object* exp){
@@ -143,18 +146,12 @@ object* create_empty_environment(){
     return env;
 
 }
-object* populate_default_environment(object* env){
-    /*
-    This should have all the primitive procedures that are expected, such as '+', '*', eq?, etc...
-    It adds them to the environment passed in
-     */
-    object* o = cons(exit_symbol, empty_list);
-    return extend_env(o, o, env);
-}
 
 
 
-object* is_null(object* exp){ //Maybe make this return an int instead
+
+
+object* is_null(object* exp){ 
     return is_empty_list(car(exp)) ? otrue : ofalse;
 }
 
@@ -211,16 +208,88 @@ object* expand_cond(object* clauses){
     }
 }
 
+object* make_primitive(object* (*function)(struct object* args)){
+    object* primitive_proc = create_object();
+    primitive_proc->type = PRIMITIVE;
+    primitive_proc->data.primitive.function = function;
+    return primitive_proc;
+}
+
 object* make_procedure(object* params, object* body, object* env){
     //Returns a compound procedure i.e. user defined
     object* proc = create_object();
 
     proc->type = COMPOUND;
     proc->data.compound.params = params;
-    proc->data.compound.params = body;
-    proc->data.compound.params = env;
+    proc->data.compound.body = body;
+    proc->data.compound.env = env;
 
+    return proc;
+}
 
+object* eval_sequence(object* exp, object* env){
+    //Currently, car(exp) must be the begin symbol
+    //Should be modified so it is just the first pair to execute
+    exp = cdr(exp); 
+    object* val;
+    while (!is_empty_list(exp)){
+        val = eval(car(exp), env);
+        exp = cdr(exp);
+    }
+    return val;
+}
+
+object* apply_primitive(object* procedure, object* arguments){
+    //error("Have not implemented primitives yet");
+    #define primitive_function(p) p->data.primitive.function
+    object* result = (primitive_function(procedure))(arguments);
+    return result;
+}
+
+object* apply(object* procedure, object* arguments){
+    if (procedure->type == PRIMITIVE){
+        return apply_primitive(procedure, arguments);
+    }
+    else if (procedure->type = COMPOUND){
+        #define procedure_parameters(p) p->data.compound.params
+        #define procedure_body(p) p->data.compound.body
+        #define procedure_env(p) p->data.compound.env
+
+        // cons(begin_symbol, procedure_body(procedure)) should actually be (begin_symbol (body, emptylist))
+        // 
+        // Issue: During procedure creation, probably not returning the correct pair
+        return eval_sequence(cons(begin_symbol, procedure_body(procedure)), 
+                            extend_env( procedure_parameters(procedure), 
+                                        arguments, procedure_env(procedure)));
+    }
+    else{
+        error("Unknown procedure type when trying to apply()");
+    }
+}
+
+object* evaluate_args(object* expressions, object* env){
+    //list-of-values in SICP
+    if (is_empty_list(expressions)){
+        return empty_list;
+    }
+    else{
+        return cons(eval(car(expressions), env),
+                    evaluate_args(cdr(expressions), env));
+    }
+}
+
+object* populate_default_environment(object* env){
+    /*
+    This should have all the primitive procedures that are expected, such as '+', '*', eq?, etc...
+    It adds them to the environment passed in
+     */
+    object* o = cons(exit_symbol, empty_list);
+
+    #define primitive_procedure(name, primitive_name) define_symbol(make_symbol(name), make_primitive(primitive_name), env);
+
+    primitive_procedure("+", primitive_add);
+
+    return extend_env(o, o, env);
 }
 
 object* eval(object *exp, object *env){
@@ -250,19 +319,22 @@ object* eval(object *exp, object *env){
         return make_procedure(car(cdr(exp)), cdr(cdr(exp)), env);
     }
     else if (is_begin(exp)){
-        exp = cdr(exp);
+        /*exp = cdr(exp);
         while (!is_null(cdr(exp))){
             eval(car(exp), env);
             exp = cdr(exp);
         }
-        return eval(car(exp), env);
+        return eval(car(exp), env);*/
+        return eval_sequence(exp, env);
     }
     else if (is_cond(exp)){
         object* cond_clauses = cdr(exp);
         return eval(expand_cond(cond_clauses), env);
     }
     else if (is_application(exp)){ //Kind of pointless but basically it just tests if it's a pair
-
+        #define operator(e) car(e)
+        #define operands(e) cdr(e)
+        return apply(eval(operator(exp), env), evaluate_args(operands(exp),env));
     }
     else{
         error("Not yet implemented or unknown expression");
