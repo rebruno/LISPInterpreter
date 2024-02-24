@@ -4,7 +4,7 @@
 #define true 1
 #define false 0
 
-typedef enum {EMPTY_LIST, SYMBOL, FIXNUM, BOOLEAN, CHARACTER, STRING, PAIR, PRIMITIVE, COMPOUND } otype;
+typedef enum {EMPTY_LIST, SYMBOL, FIXNUM, BOOLEAN, CHARACTER, STRING, PAIR, PRIMITIVE, COMPOUND, ERROR } otype;
 const char *enum_strings[] = 
     {"EMPTY_LIST", "SYMBOL", "FIXNUM", "BOOLEAN", "CHARACTER", "STRING", "PAIR", "PRIMITIVE", "COMPOUND"};
 
@@ -30,6 +30,7 @@ typedef struct object {
             char* value;
         } string;
 
+        //Consider adding an arity field
         struct {
             struct object *car;
             struct object *cdr;

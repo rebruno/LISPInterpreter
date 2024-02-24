@@ -8,7 +8,7 @@
 int write_sexpr(FILE *out, object* sexpr);
 
 
-static int write_procedure(FILE *out, object* procedure){
+int write_procedure(FILE *out, object* procedure){
     int return_value = fprintf(out, "#procedure");
     if (procedure->type == COMPOUND){
         return_value = write_sexpr(out, procedure->data.compound.params);
@@ -19,7 +19,7 @@ static int write_procedure(FILE *out, object* procedure){
 
 
 
-static int write_pair(FILE *out, object* pair){
+int write_pair(FILE *out, object* pair){
     //If cdr is not a pair or the empty list then print the dot
     //Else, print the car and recursively call it, unless it's the empty list in which case
     //nothing is printed
@@ -33,6 +33,7 @@ static int write_pair(FILE *out, object* pair){
         return_value = write_sexpr(out, car(pair));
     }
     else{ //a pair
+        write_sexpr(out, car(pair));
         fprintf(out, " . ");
         return_value = write_sexpr(out, cdr(pair));
     }
@@ -64,6 +65,7 @@ int write_sexpr(FILE *out, object* sexpr){
         case CHARACTER:
             return_value = fprintf(out, "%c ", sexpr->data.character.value);
             break;
+        case ERROR:
         case STRING:
             return_value = fprintf(out, "%s ", sexpr->data.string.value);
             break;

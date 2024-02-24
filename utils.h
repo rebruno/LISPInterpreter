@@ -9,17 +9,8 @@
 #include <stddef.h>
 #include <stdio.h>
 
-
 void error(char* s){
     printf("%s\n", s);
-}
-
-void warning(char* s){
-    printf("%s\n", s);
-}
-
-void exit_proc(int n){
-    exit(n);
 }
 
 void *allocate(size_t size){ //not GC'd, 
@@ -40,6 +31,32 @@ object *create_object(){
 
     return obj;
 }
+
+
+
+object* error_object(char* s){
+    object* o = create_object();
+    o->type = ERROR;
+    o->data.string.value = s;
+    return o;
+}
+
+void warning(char* s){
+    printf("%s\n", s);
+}
+
+void exit_proc(int n){
+    exit(n);
+}
+
+object* primitive_exit(object* arg){
+
+    exit(arg->data.fixnum.value);
+    return 0L;
+}
+
+
+
 
 int is_empty_list(object* list){
     return list == empty_list;
@@ -93,11 +110,11 @@ void set_cdr(object* o, object* val){
 }
 
 int is_true(object* o){
-    return car(o) == otrue;
+    return o == otrue;
 }
 
 int is_false(object* o){
-    return car(o) == ofalse;
+    return o == ofalse;
 }
 
 int is_assignment(object* o){
@@ -159,6 +176,18 @@ int list_length(object* lst){
     }
 
     return c;
+}
+
+int arity_check(object* args, int arity){
+    /*
+    arity is the number of arguments
+    for variable arity, the minimum number of arguments is the negative
+    so for the '+' primitive, it needs at least 2 arguments, so it has an arity of -2
+    */
+    if (arity < 0){
+        return list_length(args) > -arity;
+    }
+    return list_length(args) == arity;
 }
 
 object* make_fixnum(int value){

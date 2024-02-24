@@ -159,13 +159,13 @@ object* eval_if(object* exp, object* env){
     object* body = cdr(exp);
     object* predicate = eval(car(body), env);
     if (is_true(predicate)){
-        return car(cdr(body));
+        return eval(car(cdr(body)), env);
     }
     else{
         if (is_empty_list(cdr(cdr(body)))){
-            return cdr(cdr(body));    
+            return eval(cdr(cdr(body)), env);    
         }
-        return ofalse;
+        return eval(car(cdr(cdr(body))), env);
     }
 }
 
@@ -250,20 +250,17 @@ object* apply(object* procedure, object* arguments){
     if (procedure->type == PRIMITIVE){
         return apply_primitive(procedure, arguments);
     }
-    else if (procedure->type = COMPOUND){
+    else if (procedure->type == COMPOUND){
         #define procedure_parameters(p) p->data.compound.params
         #define procedure_body(p) p->data.compound.body
         #define procedure_env(p) p->data.compound.env
 
-        // cons(begin_symbol, procedure_body(procedure)) should actually be (begin_symbol (body, emptylist))
-        // 
-        // Issue: During procedure creation, probably not returning the correct pair
         return eval_sequence(cons(begin_symbol, procedure_body(procedure)), 
                             extend_env( procedure_parameters(procedure), 
                                         arguments, procedure_env(procedure)));
     }
     else{
-        error("Unknown procedure type when trying to apply()");
+        return error_object("Unknown procedure type when trying to apply()");
     }
 }
 
@@ -283,13 +280,35 @@ object* populate_default_environment(object* env){
     This should have all the primitive procedures that are expected, such as '+', '*', eq?, etc...
     It adds them to the environment passed in
      */
-    object* o = cons(exit_symbol, empty_list);
 
     #define primitive_procedure(name, primitive_name) define_symbol(make_symbol(name), make_primitive(primitive_name), env);
 
     primitive_procedure("+", primitive_add);
+    primitive_procedure("-", primitive_sub);
+    primitive_procedure("*", primitive_mul);
+    primitive_procedure("/", primitive_div);
+    primitive_procedure("%", primitive_modulo);
 
-    return extend_env(o, o, env);
+    //list operations
+    primitive_procedure("list", primitive_list);
+    primitive_procedure("car", primitive_car);
+    primitive_procedure("cdr", primitive_cdr);
+    primitive_procedure("cons", primitive_cons);
+
+    //booleans
+    primitive_procedure("not", primitive_not);
+    primitive_procedure("eq?", primitive_eq);
+    primitive_procedure(">", primitive_gt);
+    primitive_procedure("<", primitive_lt);
+    primitive_procedure("<=", primitive_le);
+    primitive_procedure(">=", primitive_ge);
+
+
+
+    //Found in utils.h because it uses the standard library
+    primitive_procedure("exit", primitive_exit);
+
+    return env;
 }
 
 object* eval(object *exp, object *env){
@@ -305,15 +324,18 @@ object* eval(object *exp, object *env){
     }
     else if (is_assignment(exp)){
         //set_symbol(exp, env);
-        assign_symbol(car(cdr(exp)), 
+        int result = assign_symbol(car(cdr(exp)), 
             eval(cdr(cdr(exp)), env), env);
+        if (result < 0){
+            error("Did not find variable to assign to");
+        }
     }
     else if (is_definition(exp)){
         //define_symbol(car(cdr(exp)), eval(car(cdr(cdr(exp))), env), env);
         define_symbol(definition_variable(exp), eval(definition_value(exp), env), env);
     }
     else if (is_if(exp)){
-        return eval(eval_if(exp, env), env); //For tail calls later, set exp = eval_if and just go to top
+        return eval_if(exp, env); //For tail calls later, set exp = eval_if and just go to top
     }
     else if (is_lambda(exp)){
         return make_procedure(car(cdr(exp)), cdr(cdr(exp)), env);

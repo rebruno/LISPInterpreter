@@ -17,14 +17,40 @@ int main(int argc, char const *argv[])
 
     object* o = empty_list;
     object* o2;
+
+    FILE* in = stdin;
+    FILE* out = stdout;
+
+    int reading_from_file = 0;
+    if (argc > 1){
+        in = fopen(argv[1], "r");
+        reading_from_file = 1;
+        if (in == NULL){
+            printf("Cannot open the file %s\n", argv[1]);
+            return -1;
+        }
+    }
+
     while (!is_exit(o)){ //Exit should be replaced by a proper procedure
         printf("> ");
-        o = read(stdin);
+        o = read(in);
+        if (o->type == ERROR){
+            if (ferror(in)){
+                printf("Encountered an error in reading\n");    
+            }
+            break;
+        }
         o2 = eval(o, env);
-        write(stdout, o2);
+        if (reading_from_file){
+            write(out, o);
+        }
+        write(out, o2);
     }
 
     printf("Exiting\n");
+    
+    fclose(in); 
+
     return 0;
 }
 

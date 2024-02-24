@@ -35,7 +35,32 @@ object* exit_symbol;
 object* symbols = &(empty_list_obj);
 
 
+#define BUFFER_SIZE 1000
 
+//wav.c from elsewhere has a better example of doing this
+#define ERRORHANDLE(c) \
+    if (c == EOF){\
+        goto handleEOF;\
+    } 
+
+
+
+//Error handling is left to where these are used
+int get_next_char(FILE *in){ //peek
+    int c = fgetc(in);
+    if (c == EOF){
+        return c;
+    }
+    int i = ungetc(c, in);
+    if (i == EOF){
+        return i;
+    }
+    return c; 
+}
+
+int consume_next_char(FILE *in){ 
+    return fgetc(in);
+}
 
 
 int add_symbol(object* s){
@@ -61,32 +86,7 @@ object* lookup_symbol(const char* v){
     return empty_list;
 }
 
-#define BUFFER_SIZE 1000
 
-//wav.c from elsewhere has a better example of doing this
-#define ERRORHANDLE(c) \
-    if (c == EOF){\
-        goto handleEOF;\
-    } 
-
-
-
-//Error handling is left to where these are used
-int get_next_char(FILE *in){ //peek
-    int c = fgetc(in);
-    if (c == EOF && ferror(in)){
-        return c;
-    }
-    int i = ungetc(c, in);
-    if (i == EOF){
-        return i;
-    }
-    return c; 
-}
-
-int consume_next_char(FILE *in){ 
-    return fgetc(in);
-}
 
 
 
@@ -275,7 +275,7 @@ object *readatom(FILE *in){
         if (buf[1] == 't'){
             return otrue;
         }
-        else if (c == 'f'){
+        else if (buf[1] == 'f'){
             return ofalse;
         }
         return make_char(buf);
@@ -320,8 +320,10 @@ object *read(FILE *in){
     object* o;
 
     int c = get_next_char(in);
-
-    if (c == '('){
+    if (c == EOF){
+        return error_object("EOF"); //pass it upwards
+    }
+    else if (c == '('){
         consume_next_char(in);
         o = readpair(in);
         if (get_next_char(in) != ')'){
