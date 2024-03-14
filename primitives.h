@@ -20,6 +20,11 @@ object* primitive_list(object* list){
     return list;
 }
 
+object* primitive_list_length(object* list){
+    int size = list_length(car(list));
+    return make_fixnum(size);
+}
+
 object* primitive_car(object* args){
     //args = (car a), where 'a' is a pair (b . '())
     arity_check(args, 1);
@@ -184,6 +189,11 @@ object* primitive_eq(object* arg){
     }
 }
 
+object* primitive_null(object* arg){
+    return is_empty_list(car(arg)) ? otrue : ofalse;
+}
+
+
 object* primitive_lt(object* arg){
     //(< a b), between 2 numbers
 
@@ -286,4 +296,20 @@ object* primitive_ge(object* arg){
         default:
             return error_object("'>=' supported only for numbers");
     }
+}
+
+
+
+//I/O
+
+extern object* read_stdin();
+object* primitive_read(object *arg){
+    return read_stdin();
+}
+
+
+extern void write_stdin(object *arg);
+object* primitive_write(object *arg){
+    write_stdin(car(arg));
+    return empty_list;
 }

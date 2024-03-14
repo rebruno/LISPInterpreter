@@ -8,6 +8,7 @@
 int write_sexpr(FILE *out, object* sexpr);
 
 
+
 int write_procedure(FILE *out, object* procedure){
     int return_value = fprintf(out, "#procedure");
     if (procedure->type == COMPOUND){
@@ -94,4 +95,8 @@ void write(FILE *out, object* o){
         error("Error in writing to stream");
     }
     fprintf(out, "\n");
+}
+
+void write_stdin(object* arg){
+    write(stdout, arg);
 }

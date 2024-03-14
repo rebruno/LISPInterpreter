@@ -56,7 +56,9 @@ object* primitive_exit(object* arg){
 }
 
 
-
+int is_error(object* error){
+    return error->type == ERROR;
+}
 
 int is_empty_list(object* list){
     return list == empty_list;

@@ -102,6 +102,10 @@ void eat_whitespace(FILE *in){
 
 object *read(FILE *in);
 
+object* read_stdin(){
+    return read(stdin);
+}
+
 object *readpair(FILE *in){
     //Starts on first character after the opening '('
     eat_whitespace(in); 

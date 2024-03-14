@@ -148,17 +148,13 @@ object* create_empty_environment(){
 }
 
 
-
-
-
-object* is_null(object* exp){ 
-    return is_empty_list(car(exp)) ? otrue : ofalse;
-}
-
 object* eval_if(object* exp, object* env){
     object* body = cdr(exp);
     object* predicate = eval(car(body), env);
-    if (is_true(predicate)){
+    if (is_error(predicate)){
+        return predicate;
+    }
+    else if (is_true(predicate)){
         return eval(car(cdr(body)), env);
     }
     else{
@@ -291,6 +287,7 @@ object* populate_default_environment(object* env){
 
     //list operations
     primitive_procedure("list", primitive_list);
+     primitive_procedure("length", primitive_list_length);
     primitive_procedure("car", primitive_car);
     primitive_procedure("cdr", primitive_cdr);
     primitive_procedure("cons", primitive_cons);
@@ -298,11 +295,15 @@ object* populate_default_environment(object* env){
     //booleans
     primitive_procedure("not", primitive_not);
     primitive_procedure("eq?", primitive_eq);
+    primitive_procedure("null?", primitive_null);
     primitive_procedure(">", primitive_gt);
     primitive_procedure("<", primitive_lt);
     primitive_procedure("<=", primitive_le);
     primitive_procedure(">=", primitive_ge);
 
+    //I/O
+    primitive_procedure("read", primitive_read);
+    primitive_procedure("write", primitive_write);
 
 
     //Found in utils.h because it uses the standard library
@@ -331,7 +332,6 @@ object* eval(object *exp, object *env){
         }
     }
     else if (is_definition(exp)){
-        //define_symbol(car(cdr(exp)), eval(car(cdr(cdr(exp))), env), env);
         define_symbol(definition_variable(exp), eval(definition_value(exp), env), env);
     }
     else if (is_if(exp)){
@@ -341,12 +341,6 @@ object* eval(object *exp, object *env){
         return make_procedure(car(cdr(exp)), cdr(cdr(exp)), env);
     }
     else if (is_begin(exp)){
-        /*exp = cdr(exp);
-        while (!is_null(cdr(exp))){
-            eval(car(exp), env);
-            exp = cdr(exp);
-        }
-        return eval(car(exp), env);*/
         return eval_sequence(exp, env);
     }
     else if (is_cond(exp)){

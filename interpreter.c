@@ -31,7 +31,7 @@ int main(int argc, char const *argv[])
         }
     }
 
-    while (!is_exit(o)){ //Exit should be replaced by a proper procedure
+    while (1){ 
         printf("> ");
         o = read(in);
         if (o->type == ERROR){
