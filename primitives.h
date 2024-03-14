@@ -2,7 +2,6 @@
 #include "types.h"
 
 /*
-
 Starting point list:
     https://people.eecs.berkeley.edu/~bh/ssch27/appendix-funlist.html
 Desired primitives:
@@ -306,7 +305,6 @@ extern object* read_stdin();
 object* primitive_read(object *arg){
     return read_stdin();
 }
-
 
 extern void write_stdin(object *arg);
 object* primitive_write(object *arg){

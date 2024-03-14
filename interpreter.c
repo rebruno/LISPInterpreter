@@ -37,8 +37,13 @@ int main(int argc, char const *argv[])
         if (o->type == ERROR){
             if (ferror(in)){
                 printf("Encountered an error in reading\n");    
+                break;
             }
-            break;
+            //EOF but no error, just continue to terminal by using stdin
+            fclose(in);
+            in = stdin;
+            continue;
+            //break;
         }
         o2 = eval(o, env);
         if (reading_from_file){
