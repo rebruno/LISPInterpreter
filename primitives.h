@@ -60,6 +60,13 @@ object* primitive_add(object* list){
 
 object* primitive_sub(object* list){
     int r = 0;
+    if (is_fixnum(car(list))){
+            r = car(list)->data.fixnum.value;
+            list = cdr(list);
+    }
+    else{
+        return error_object("Expected a number when subtracting");
+    }
     while (!is_empty_list(list)){
         object* a = car(list);
         //type check
@@ -67,7 +74,7 @@ object* primitive_sub(object* list){
             r -= a->data.fixnum.value;
         }
         else{         
-            return error_object("Expected a number when adding");
+            return error_object("Expected a number when subtracting");
         }
         list = cdr(list);
     }
@@ -75,15 +82,22 @@ object* primitive_sub(object* list){
 }
 
 object* primitive_mul(object* list){
-    int r = 0;
+    int r = 1;
     while (!is_empty_list(list)){
         object* a = car(list);
         //type check
         if (is_fixnum(a)){
-            r *= a->data.fixnum.value;
+            int x = a->data.fixnum.value;
+            //Overflow check
+            if ((r != 0 && x > INT_MAX / r) || (r != 0 && x > INT_MAX / r)
+                || (x == -1 && r == INT_MAX) || (x == -1 && x == INT_MAX)){
+                return error_object("Integer overflow");
+            }   
+
+            r *= x;
         }
         else{         
-            return error_object("Expected a number when adding");
+            return error_object("Expected a number when multiplying");
         }
         list = cdr(list);
     }
@@ -92,6 +106,13 @@ object* primitive_mul(object* list){
 
 object* primitive_div(object* list){
     int r = 0;
+    if (is_fixnum(car(list))){
+            r = car(list)->data.fixnum.value;
+            list = cdr(list);
+    }
+    else{
+        return error_object("Expected a number when dividing");
+    }
     while (!is_empty_list(list)){
         object* a = car(list);
         //type check
@@ -102,7 +123,7 @@ object* primitive_div(object* list){
             r /= a->data.fixnum.value;
         }
         else{         
-            return error_object("Expected a number when adding");
+            return error_object("Expected a number when dividing");
         }
         list = cdr(list);
     }

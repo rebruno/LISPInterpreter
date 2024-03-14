@@ -165,6 +165,24 @@ object* eval_if(object* exp, object* env){
     }
 }
 
+object* eval_if_tc(object* exp, object* env){
+    //Evaluates predicate, returns the expression to evaluate
+    object* body = cdr(exp);
+    object* predicate = eval(car(body), env);
+    if (is_error(predicate)){
+        return predicate;
+    }
+    else if (is_true(predicate)){
+        return car(cdr(body));
+    }
+    else{
+        if (is_empty_list(cdr(cdr(body)))){
+            return cdr(cdr(body));
+        }
+        return car(cdr(cdr(body)));
+    }
+}
+
 object* sequence_to_exp(object* seq){
     if (is_empty_list(seq)){
         return seq;
@@ -234,6 +252,7 @@ object* eval_sequence(object* exp, object* env){
     }
     return val;
 }
+
 
 object* apply_primitive(object* procedure, object* arguments){
     //error("Have not implemented primitives yet");
@@ -313,47 +332,86 @@ object* populate_default_environment(object* env){
 }
 
 object* eval(object *exp, object *env){
+    object* result;
 
-    if (is_self_eval(exp)){
-        return exp;
-    }
-    else if (is_symbol(exp)){
-        return lookup(exp, env);
-    }
-    else if (is_quoted(exp)){
-        return car(cdr(exp));
-    }
-    else if (is_assignment(exp)){
-        //set_symbol(exp, env);
-        int result = assign_symbol(car(cdr(exp)), 
-            eval(cdr(cdr(exp)), env), env);
-        if (result < 0){
-            error("Did not find variable to assign to");
+    while(1){
+        if (is_error(exp)){
+            return exp;
+        }
+        else if (is_self_eval(exp)){
+            return exp;
+        }
+        else if (is_symbol(exp)){
+            return lookup(exp, env);
+        }
+        else if (is_quoted(exp)){
+            return car(cdr(exp));
+        }
+        else if (is_assignment(exp)){
+            //set_symbol(exp, env);
+            int result = assign_symbol(car(cdr(exp)), 
+                eval(cdr(cdr(exp)), env), env);
+            if (result < 0){
+                error("Did not find variable to assign to");
+            }
+        }
+        else if (is_definition(exp)){
+            define_symbol(definition_variable(exp), eval(definition_value(exp), env), env);
+            return empty_list;
+        }
+        else if (is_if(exp)){
+            exp = eval_if_tc(exp, env);
+            continue;
+        }
+        else if (is_lambda(exp)){
+            return make_procedure(car(cdr(exp)), cdr(cdr(exp)), env);
+        }
+        else if (is_begin(exp)){
+            //return eval_sequence(exp, env);
+            exp = cdr(exp); 
+            object* val;
+            while (!is_empty_list(cdr(exp))){
+                eval(car(exp), env);
+                exp = cdr(exp);
+            }
+            exp = car(exp);
+            continue;
+        }
+        else if (is_cond(exp)){
+            object* cond_clauses = cdr(exp);
+            exp = expand_cond(cond_clauses);
+            continue;
+        }
+        else if (is_application(exp)){ //Kind of pointless but basically it just tests if it's a pair
+            #define operator(e) car(e)
+            #define operands(e) cdr(e)
+
+            object* procedure = eval(operator(exp), env);
+            object* args = evaluate_args(operands(exp), env);
+
+            if (procedure->type == PRIMITIVE){
+                return apply_primitive(procedure, args);
+            }
+            else if (procedure->type == COMPOUND){
+                #define procedure_parameters(p) p->data.compound.params
+                #define procedure_body(p) p->data.compound.body
+                #define procedure_env(p) p->data.compound.env
+
+                exp = cons(begin_symbol, procedure_body(procedure));
+                env = extend_env(procedure_parameters(procedure), 
+                                                args, procedure_env(procedure));
+                continue;
+            }
+            else{
+                return error_object("Unknown procedure type when trying to apply()");
+            }
+            
+        }
+        else{
+            error("Not yet implemented or unknown expression");
         }
     }
-    else if (is_definition(exp)){
-        define_symbol(definition_variable(exp), eval(definition_value(exp), env), env);
-    }
-    else if (is_if(exp)){
-        return eval_if(exp, env); //For tail calls later, set exp = eval_if and just go to top
-    }
-    else if (is_lambda(exp)){
-        return make_procedure(car(cdr(exp)), cdr(cdr(exp)), env);
-    }
-    else if (is_begin(exp)){
-        return eval_sequence(exp, env);
-    }
-    else if (is_cond(exp)){
-        object* cond_clauses = cdr(exp);
-        return eval(expand_cond(cond_clauses), env);
-    }
-    else if (is_application(exp)){ //Kind of pointless but basically it just tests if it's a pair
-        #define operator(e) car(e)
-        #define operands(e) cdr(e)
-        return apply(eval(operator(exp), env), evaluate_args(operands(exp),env));
-    }
-    else{
-        error("Not yet implemented or unknown expression");
-    }
+
+    
     return empty_list;
 }

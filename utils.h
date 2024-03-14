@@ -8,13 +8,17 @@
 #include <stdlib.h>
 #include <stddef.h>
 #include <stdio.h>
+#include <limits.h>
 
 void error(char* s){
     printf("%s\n", s);
 }
 
+
+int allocated_size = 0;
+
 void *allocate(size_t size){ //not GC'd, 
-    //return malloc(size);
+    allocated_size += size;
     return calloc(1, size);
 }
 

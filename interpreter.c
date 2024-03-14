@@ -42,6 +42,7 @@ int main(int argc, char const *argv[])
             //EOF but no error, just continue to terminal by using stdin
             fclose(in);
             in = stdin;
+            reading_from_file = 0;
             continue;
             //break;
         }
