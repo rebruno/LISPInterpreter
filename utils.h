@@ -14,12 +14,30 @@ void error(char* s){
     printf("%s\n", s);
 }
 
+void warning(char* s){
+    printf("%s\n", s);
+}
+
+void exit_proc(int n){
+    exit(n);
+}
+
+object* primitive_exit(object* arg){
+
+    exit(arg->data.fixnum.value);
+    return 0L;
+}
 
 int allocated_size = 0;
 
 void *allocate(size_t size){ //not GC'd, 
     allocated_size += size;
     return calloc(1, size);
+}
+
+void free_object(object* o){
+    //Doesn't free cars/cdrs as they might be shared
+    free(o);
 }
 
 object *create_object(){
@@ -36,8 +54,6 @@ object *create_object(){
     return obj;
 }
 
-
-
 object* error_object(char* s){
     object* o = create_object();
     o->type = ERROR;
@@ -45,19 +61,34 @@ object* error_object(char* s){
     return o;
 }
 
-void warning(char* s){
-    printf("%s\n", s);
+object* cons(object *car, object *cdr){
+    object *ocons = create_object();
+    ocons->type = PAIR;
+    
+    ocons->data.pair.car = car;
+    ocons->data.pair.cdr = cdr;
+
+    return ocons;
 }
 
-void exit_proc(int n){
-    exit(n);
+#define is_pair(o) o->type == PAIR
+object* car(object* pair){
+    if (is_pair(pair)){
+        return pair->data.pair.car;
+    }
+    error("Expected a pair when using car!");
+    return empty_list;
 }
 
-object* primitive_exit(object* arg){
-
-    exit(arg->data.fixnum.value);
-    return 0L;
+object* cdr(object* pair){
+    if (is_pair(pair)){
+        return pair->data.pair.cdr;
+    }
+    error("Expected a pair when using cdr!");
+    return empty_list;
 }
+#undef is_pair
+
 
 
 int is_error(object* error){
@@ -80,36 +111,9 @@ int is_fixnum(object* fixnum){
     return fixnum->type == FIXNUM;
 }
 
-object* cons(object *car, object *cdr){
-    object *ocons = create_object();
-    ocons->type = PAIR;
-    
-    ocons->data.pair.car = car;
-    ocons->data.pair.cdr = cdr;
-
-    return ocons;
-}
-
-object* car(object* pair){
-    if (is_pair(pair)){
-        return pair->data.pair.car;
-    }
-    error("Expected a pair when using car!");
-    return empty_list;
-}
-
-object* cdr(object* pair){
-    if (is_pair(pair)){
-        return pair->data.pair.cdr;
-    }
-    error("Expected a pair when using cdr!");
-    return empty_list;
-}
-
 void set_car(object* o, object* val){
     o->data.pair.car = val;
 }
-
 
 void set_cdr(object* o, object* val){
     o->data.pair.cdr = val;

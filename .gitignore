@@ -52,3 +52,5 @@ Mkfile.old
 dkms.conf
 *.s
 *.txt
+arena_evaluator.h
+*.bat

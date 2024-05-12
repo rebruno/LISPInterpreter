@@ -4,6 +4,9 @@
 #include "primitives.h"
 
 
+int extend_env_cons = 0;
+int eval_arg_cons = 0;
+
 object* eval(object *exp, object *env);
 
 void add_binding_to_frame(object* var, object* val, object* frame){
@@ -34,7 +37,7 @@ object* lookup(object* id, object* env){
     }
 
     char buf[100];
-    int i = snprintf(buf, 100, "Cannot find symbol %s", id->data.symbol.value);
+    int i = snprintf(buf, 100, "Cannot find symbol: %s", id->data.symbol.value);
     if ( i >= 0 && i < 100){
         error(buf);
     } 
@@ -129,12 +132,9 @@ object* extend_env(object* vars, object* vals, object* env){
         }
     }
 
-    
+    extend_env_cons += 1;
     return cons(make_frame(vars, vals), env);
 }
-
-
-
 
 object* create_empty_environment(){
     // Environments are expected to be made of frames. If the empty environment is just an empty list
@@ -222,6 +222,7 @@ object* expand_cond(object* clauses){
     }
 }
 
+
 object* make_primitive(object* (*function)(struct object* args)){
     object* primitive_proc = create_object();
     primitive_proc->type = PRIMITIVE;
@@ -269,10 +270,12 @@ object* apply(object* procedure, object* arguments){
         #define procedure_parameters(p) p->data.compound.params
         #define procedure_body(p) p->data.compound.body
         #define procedure_env(p) p->data.compound.env
-
+        
+        ///*
         return eval_sequence(cons(begin_symbol, procedure_body(procedure)), 
                             extend_env( procedure_parameters(procedure), 
                                         arguments, procedure_env(procedure)));
+        //*/
     }
     else{
         return error_object("Unknown procedure type when trying to apply()");
@@ -285,10 +288,16 @@ object* evaluate_args(object* expressions, object* env){
         return empty_list;
     }
     else{
+        eval_arg_cons += 1;
         return cons(eval(car(expressions), env),
                     evaluate_args(cdr(expressions), env));
     }
 }
+
+object* evaluate_args_p(object* args, object* expressions, object* env){
+
+}
+
 
 object* populate_default_environment(object* env){
     /*
@@ -306,7 +315,7 @@ object* populate_default_environment(object* env){
 
     //list operations
     primitive_procedure("list", primitive_list);
-     primitive_procedure("length", primitive_list_length);
+    primitive_procedure("length", primitive_list_length);
     primitive_procedure("car", primitive_car);
     primitive_procedure("cdr", primitive_cdr);
     primitive_procedure("cons", primitive_cons);
@@ -331,8 +340,36 @@ object* populate_default_environment(object* env){
     return env;
 }
 
+
+object* simplify_definition(object* exp, object* env){
+    /*
+    Currently, recursive define's are re-interpretered EVERY time
+    i.e. (define (a x) (define (h y) (+ y x)) (h 2))
+    The definition of the symbol 'h' is reinterpreted every time, causing a lot of memory usage
+    Instead, everytime a definition is encountered, the inside is visited too so the entire thing is replaced 
+
+    The goal is to have the above become 
+
+    (define (a x) 
+        (h 2))
+        With (h : (lambda (y) (+ y x)))
+        In the environment
+
+    (if (pair? e) (if (define? e) (simplify_definition e) (loop (cdr e))) '())
+
+    */
+
+    return 0L;
+}
+
+
+extern int allocated_size;
+
 object* eval(object *exp, object *env){
+    object sequence;
     object* result;
+
+    //printf("Extend and Evalarg cons calls: %d %d\n", extend_env_cons, eval_arg_cons);
 
     while(1){
         if (is_error(exp)){
@@ -356,6 +393,8 @@ object* eval(object *exp, object *env){
             }
         }
         else if (is_definition(exp)){
+            //define_symbol(name, exp)
+            //The evaluation of the value is to go from a lambda to a procedure
             define_symbol(definition_variable(exp), eval(definition_value(exp), env), env);
             return empty_list;
         }
@@ -397,7 +436,13 @@ object* eval(object *exp, object *env){
                 #define procedure_body(p) p->data.compound.body
                 #define procedure_env(p) p->data.compound.env
 
-                exp = cons(begin_symbol, procedure_body(procedure));
+                //Since this is a one-time use, just stack allocate it
+                sequence.type = PAIR;
+                sequence.data.pair.car = begin_symbol;
+                sequence.data.pair.cdr = procedure_body(procedure);
+
+                exp = &sequence;
+                //exp = cons(begin_symbol, procedure_body(procedure));
                 env = extend_env(procedure_parameters(procedure), 
                                                 args, procedure_env(procedure));
                 continue;
@@ -408,7 +453,7 @@ object* eval(object *exp, object *env){
             
         }
         else{
-            error("Not yet implemented or unknown expression");
+            return error_object("Not yet implemented or unknown expression type");
         }
     }
 

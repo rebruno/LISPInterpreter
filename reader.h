@@ -179,7 +179,7 @@ object *readstring(FILE *in){
 
     char *buf = allocate(BUFFER_SIZE * sizeof *buf);  //not sure if using int or char is better
 
-    object *o = create_object();
+    
     int i = 0;
 
     int c = get_next_char(in);
@@ -197,6 +197,7 @@ object *readstring(FILE *in){
     //last char was delim
     buf[i-1] = '\0';
 
+    object *o = create_object();
     o->type = STRING;
     o->data.string.value = buf;
 
@@ -213,7 +214,6 @@ object *make_char(const char *str){
 
     object *o = create_object();
     o->type = CHARACTER;
-
     o->data.character.value = str[2]; //When supporting forms like #\u03BB, will need to change this
 
     return o;

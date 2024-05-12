@@ -11,7 +11,6 @@ Desired primitives:
  */
 
 
-
 //list operations
 object* primitive_list(object* list){
     //(list 1 2 3) -> (cons 1 (cons 2 (cons 3 '())))

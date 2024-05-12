@@ -9,7 +9,9 @@ const char *enum_strings[] =
     {"EMPTY_LIST", "SYMBOL", "FIXNUM", "BOOLEAN", "CHARACTER", "STRING", "PAIR", "PRIMITIVE", "COMPOUND"};
 
 typedef struct object {
-    otype type;
+    //otype type;
+    short type;
+    unsigned short flags; //Used for GC and other stuff
     union{
         struct {
             int value;
