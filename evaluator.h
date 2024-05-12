@@ -15,7 +15,7 @@ void add_binding_to_frame(object* var, object* val, object* frame){
 }
 
 object* lookup(object* id, object* env){
-    //lookup() returns the value associated with a 
+    //lookup() returns the value associated with an identifier 
     //Env is a list of frames, where a frame is (cons variables values)
     //Lookup consists of just going through entire list
     
@@ -42,7 +42,7 @@ object* lookup(object* id, object* env){
         error(buf);
     } 
     else{
-        error("Cannot find symbol and name is too long to print");
+        error("Cannot find symbol and name is too long(greater than 100 bytes) to print");
     }
     return empty_list;
 }

@@ -14,9 +14,16 @@ void error(char* s){
     printf("%s\n", s);
 }
 
+
+#ifdef WARNING
 void warning(char* s){
     printf("%s\n", s);
 }
+#else
+void warning(char* s){
+ 
+}
+#endif
 
 void exit_proc(int n){
     exit(n);

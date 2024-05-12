@@ -44,7 +44,6 @@ int main(int argc, char const *argv[])
             in = stdin;
             reading_from_file = 0;
             continue;
-            //break;
         }
         o2 = eval(o, env);
         if (reading_from_file){
