@@ -1,13 +1,12 @@
 # LISPInterpreter
- Exercise in interpretation
+ Writing an interpreter exercise.
  Building a LISP interpreter in C because the syntax is simple, the interpreted language is interesting, and C is universal.
 
 # Plans
- The plan is to add more primitives, a tracing evaluator, simple macros.
- But first, a garbage collector.
+ Writing a garbage collector is next. 
 
 # Build
-Use meson
+Use meson to compile. Any compiler that supports the standard C library will work.
   ```
   meson setup builddir
   meson compile

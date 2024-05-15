@@ -54,3 +54,5 @@ dkms.conf
 *.txt
 arena_evaluator.h
 *.bat
+/development
+tests/free_vars.lisp
