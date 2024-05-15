@@ -1,6 +1,7 @@
 # LISPInterpreter
- Writing an interpreter exercise.
- Building a LISP interpreter in C because the syntax is simple, the interpreted language is interesting, and C is universal.
+ Writing an interpreter as an exercise.
+ Implementing it in C because it's universal.
+ Choosing a LISP because the syntax is simple.
 
 # Plans
  Writing a garbage collector is next. 
